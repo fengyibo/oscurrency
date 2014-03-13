@@ -1,6 +1,6 @@
 class ExchangesController < ApplicationController
   load_resource :person
-  load_and_authorize_resource :exchange, :through => :person
+  load_and_authorize_resource :exchange, :through => :person, :except => [:exchange_require_force]
   skip_before_filter :require_activation
   before_filter :login_or_oauth_required
 
@@ -62,7 +62,6 @@ class ExchangesController < ApplicationController
     unless @exchange.customer.present?
       @exchange.customer = current_person
     end
-
     if params[:offer]
       @offer = Offer.find(params[:offer][:id])
       @exchange.amount = @offer.calculate_amount(get_offer_count)
@@ -113,6 +112,19 @@ class ExchangesController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to person_url(current_person) }
+    end
+  end
+  
+  def exchange_require_force
+    e = ExchangeAndFee.new
+    customer = Person.find_by_name(params[:customer])
+    group = Group.find(params[:group])
+    e.customer = customer
+    e.group = group
+    e.amount = params[:amount].to_f
+    require_force = !e.customer_has_enough_money?
+    respond_to do |format|
+      format.json { render :json => require_force.to_json, :status => 200 }
     end
   end
 

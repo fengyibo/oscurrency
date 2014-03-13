@@ -105,6 +105,7 @@ Oscurrency::Application.routes.draw do
   end
 
   match 'people/verify/:id' => 'people#verify_email'
+  match 'exchanges/exchange_require_force' => 'exchanges#exchange_require_force'
 
   resources :forums do
     resources :topics do
